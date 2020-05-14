@@ -33,7 +33,7 @@ Browse the Jenkins issue tracker to see any [open issues](https://issues.jenkins
 
 ## Release Notes
 * 1.77 (March 11 2020)
-  * Increased the minimum supported Jenkins version to 2.164
+  * Increased the minimum supported Jenkins version to 2.190.3
   * Improved support for views
     ([JENKINS-59117](https://issues.jenkins-ci.org/browse/JENKINS-59117))
   * Fixed problem with detecting seed job collisions
