@@ -62,6 +62,7 @@ import javax.annotation.Nullable;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
@@ -661,7 +662,9 @@ public class ExecuteDslScripts extends Builder implements SimpleBuildStep {
     private static void logItems(TaskListener listener, String message, Collection<?> collection) {
         if (!collection.isEmpty()) {
             listener.getLogger().println(message + ":");
-            for (Object item : collection) {
+            List<?> sortedCollection = new LinkedList<>(collection);
+            sortedCollection.sort((i1, i2) -> i1.toString().compareTo(i2.toString()));
+            for (Object item : sortedCollection) {
                 listener.getLogger().println("    " + item.toString());
             }
         }
