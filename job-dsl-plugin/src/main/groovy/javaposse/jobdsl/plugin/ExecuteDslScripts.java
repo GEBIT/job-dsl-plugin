@@ -66,6 +66,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -495,13 +497,21 @@ public class ExecuteDslScripts extends Builder implements SimpleBuildStep {
             }
         }
 
-        // remove extraneous folders after jobs have been deleted/shelved
-        if (removedJobAction == RemovedJobAction.DELETE || removedJobAction == RemovedJobAction.SHELVE) {
-            for (Map.Entry<Item, GeneratedJob> folder : folders.entrySet()) {
-                folder.getKey().delete();
-                removed.add(folder.getValue());
-            }
-        }
+		// remove extraneous folders after jobs have been deleted/shelved
+		if (removedJobAction == RemovedJobAction.DELETE || removedJobAction == RemovedJobAction.SHELVE) {
+			List<Item> foldersList = new LinkedList<>(folders.keySet());
+			// sort folders: children before parents
+			foldersList.sort((f1, f2) -> f2.getFullName().length() - f1.getFullName().length());
+			for (Item folder : foldersList) {
+				Collection<?> children = ((ItemGroup) folder).getItems();
+				// delete only empty folders
+				if (children == null || children.isEmpty()) {
+					GeneratedJob job = folders.get(folder);
+					folder.delete();
+					removed.add(job);
+				}
+			}
+		}
 
         // print what happened with unreferenced jobs
         logItems(listener, "Disabled items", disabled);
