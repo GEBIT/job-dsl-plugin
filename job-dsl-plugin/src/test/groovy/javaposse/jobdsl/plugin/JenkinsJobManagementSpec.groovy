@@ -1,7 +1,16 @@
 package javaposse.jobdsl.plugin
 
+import com.cloudbees.hudson.plugins.folder.AbstractFolder
+import com.cloudbees.hudson.plugins.folder.AbstractFolderProperty
+import com.cloudbees.hudson.plugins.folder.AbstractFolderPropertyDescriptor
 import com.cloudbees.hudson.plugins.folder.Folder
+import com.cloudbees.hudson.plugins.folder.properties.FolderCredentialsProvider
+import com.cloudbees.plugins.credentials.CredentialsScope
+import com.cloudbees.plugins.credentials.domains.Domain
+import com.cloudbees.plugins.credentials.domains.DomainCredentials
+import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl
 import com.google.common.io.Resources
+import hudson.Extension
 import hudson.FilePath
 import hudson.model.AbstractBuild
 import hudson.model.AllView
@@ -33,6 +42,7 @@ import org.custommonkey.xmlunit.XMLUnit
 import org.junit.Rule
 import org.jvnet.hudson.test.JenkinsRule
 import org.jvnet.hudson.test.WithoutJenkins
+import spock.lang.IgnoreIf
 import spock.lang.Specification
 
 import static hudson.model.Result.UNSTABLE
@@ -631,6 +641,32 @@ class JenkinsJobManagementSpec extends Specification {
         e.message == 'Type of item "my-job" does not match existing type, item type can not be changed'
     }
 
+    def 'createOrUpdateConfig should preserve credentials if they exist on a folder'() {
+        setup:
+        Folder folder = jenkinsRule.createProject(Folder, 'folder')
+        folder.addProperty(createCredentialProperty())
+
+        when:
+        jobManagement.createOrUpdateConfig(createItem('folder', '/folder.xml'), false)
+
+        then:
+        def actual = jenkinsRule.jenkins.getItem('folder')
+        actual.properties.size() == 1
+    }
+
+    def 'createOrUpdateConfig should ignore other properties on the folder'() {
+        setup:
+        Folder folder = jenkinsRule.createProject(Folder, 'folder')
+        folder.addProperty(new FakeProperty())
+
+        when:
+        jobManagement.createOrUpdateConfig(createItem('folder', '/folder.xml'), false)
+
+        then:
+        def actual = jenkinsRule.jenkins.getItem('folder')
+        actual.properties.size() == 0
+    }
+
     def 'createOrUpdateView should work if view type changes'() {
         setup:
         jenkinsRule.jenkins.addView(new AllView('foo'))
@@ -882,6 +918,7 @@ class JenkinsJobManagementSpec extends Specification {
     }
 
     @SuppressWarnings('BusyWait')
+    @IgnoreIf({ os.isWindows() })
     def 'queue job'() {
         setup:
         FreeStyleProject project = jenkinsRule.createProject(FreeStyleProject, 'project')
@@ -907,6 +944,7 @@ class JenkinsJobManagementSpec extends Specification {
     }
 
     @SuppressWarnings('BusyWait')
+    @IgnoreIf({ os.isWindows() })
     def 'queue job without build'() {
         setup:
         FreeStyleProject project = jenkinsRule.createProject(FreeStyleProject, 'project')
@@ -970,10 +1008,27 @@ class JenkinsJobManagementSpec extends Specification {
         Resources.toString(Resources.getResource(resourceName), UTF_8)
     }
 
+    private static FolderCredentialsProvider.FolderCredentialsProperty createCredentialProperty() {
+        UsernamePasswordCredentialsImpl  credentials = new UsernamePasswordCredentialsImpl(CredentialsScope.GLOBAL, '',
+            '', '', '')
+        DomainCredentials[] domainCredentials = new DomainCredentials[1]
+        domainCredentials[0] = new DomainCredentials(Domain.global(), Collections.singletonList(credentials))
+
+        new FolderCredentialsProvider.FolderCredentialsProperty(domainCredentials)
+    }
+
+    private static class FakeProperty extends AbstractFolderProperty<AbstractFolder<?>> {
+
+        @Extension(optional = true)
+            static class DescriptorImpl extends AbstractFolderPropertyDescriptor {
+                final String displayName = ''
+            }
+    }
+
     private Item createItem(String name, String config) {
         new Item(jobManagement, name) {
             @Override
-            Node getNode() {
+            Node getNodeTemplate() {
                 new XmlParser().parse(JenkinsJobManagementSpec.getResourceAsStream(config))
             }
         }
