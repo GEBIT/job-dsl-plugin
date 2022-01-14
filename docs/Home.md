@@ -32,7 +32,12 @@ scripts, including [[tests for DSL scripts|Testing DSL Scripts]] and [[IDE Suppo
 Browse the Jenkins issue tracker to see any [open issues](https://issues.jenkins-ci.org/issues/?filter=15140).
 
 ## Release Notes
-* Unreleased
+* 1.78.3 (January 01 2022)
+  * Replace JSR305 annotations with SpotBugs annotations ([JENKINS-55973](https://issues.jenkins-ci.org/browse/JENKINS-55973))
+* 1.78.2 (January 01 2022)
+  * Prepare for sunset icon removal from core (https://github.com/jenkinsci/job-dsl-plugin/pull/1245)
+* 1.78.1 (October 27 2021)
+  * Fix: Ensure API Viewer is packaged correctly into the built plugin ([JENKINS-66988](https://issues.jenkins.io/browse/JENKINS-66988))
 * 1.78 (October 27 2021)
   * Don't destroy credentials when re-creating folders ([JENKINS-44681](https://issues.jenkins.io/browse/JENKINS-44681))
   * Close all streams that are passed into `userContent`

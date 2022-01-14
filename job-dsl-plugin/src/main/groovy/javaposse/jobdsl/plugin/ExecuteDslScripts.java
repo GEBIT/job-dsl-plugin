@@ -57,8 +57,9 @@ import org.jenkinsci.plugins.scriptsecurity.scripts.languages.GroovyLanguage;
 import org.jvnet.hudson.plugins.shelveproject.ShelveProjectTask;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Collection;
@@ -318,8 +319,8 @@ public class ExecuteDslScripts extends Builder implements SimpleBuildStep {
      * updated Jenkins jobs. The created / updated jobs are reported in the build result.
      */
     @Override
-    public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher,
-                        @Nonnull TaskListener listener) throws InterruptedException, IOException {
+    public void perform(@NonNull Run<?, ?> run, @NonNull FilePath workspace, @NonNull Launcher launcher,
+                        @NonNull TaskListener listener) throws InterruptedException, IOException {
         try {
             EnvVars env = run.getEnvironment(listener);
             if (run instanceof AbstractBuild) {
