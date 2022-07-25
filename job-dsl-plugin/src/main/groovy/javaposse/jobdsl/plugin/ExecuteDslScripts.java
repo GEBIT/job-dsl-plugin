@@ -27,6 +27,7 @@ import hudson.model.TaskListener;
 import hudson.model.View;
 import hudson.model.ViewGroup;
 import hudson.model.queue.QueueTaskFuture;
+import hudson.security.AccessControlled;
 import hudson.tasks.Builder;
 import javaposse.jobdsl.dsl.DslException;
 import javaposse.jobdsl.dsl.GeneratedConfigFile;
@@ -525,7 +526,11 @@ public class ExecuteDslScripts extends Builder implements SimpleBuildStep {
 
     private void shelve(Run<?,?> run, Item project, TaskListener listener) throws InterruptedException {
        Jenkins jenkins = Jenkins.get();
-       jenkins.checkPermission(Item.DELETE);
+       if (project instanceof AccessControlled) {
+    	   ((AccessControlled) project).checkPermission(Item.DELETE);
+       } else {
+    	   jenkins.checkPermission(Item.DELETE);
+       }
 
        if (! (project instanceof BuildableItem)) {
            failBuild(run, "Unable to shelve " + project + " since it is not a BuildableItem", listener, null);
