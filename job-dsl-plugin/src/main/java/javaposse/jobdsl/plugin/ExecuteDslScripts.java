@@ -38,16 +38,15 @@ import hudson.tasks.Builder;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Comparator;
-import java.util.IdentityHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javaposse.jobdsl.dsl.DslException;
@@ -496,7 +495,8 @@ public class ExecuteDslScripts extends Builder implements SimpleBuildStep {
         return freshTemplates;
     }
 
-    private void updateGeneratedJobs(final Run<?, ?> run, final Job seedJob, TaskListener listener, Set<GeneratedJob> freshJobs)
+    private void updateGeneratedJobs(
+            final Run<?, ?> run, final Job seedJob, TaskListener listener, Set<GeneratedJob> freshJobs)
             throws IOException, InterruptedException {
         // Update Project
         Set<GeneratedJob> generatedJobs = extractGeneratedObjects(seedJob, GeneratedJobsAction.class);
@@ -506,7 +506,7 @@ public class ExecuteDslScripts extends Builder implements SimpleBuildStep {
         Set<GeneratedJob> removed = new HashSet<>();
         Set<GeneratedJob> shelved = new HashSet<>();
         Set<GeneratedJob> disabled = new HashSet<>();
-        Map<Item,GeneratedJob> folders = new IdentityHashMap<>();
+        Map<Item, GeneratedJob> folders = new IdentityHashMap<>();
 
         logItems(listener, "Added items", added);
         logItems(listener, "Existing items", existing);
@@ -516,7 +516,8 @@ public class ExecuteDslScripts extends Builder implements SimpleBuildStep {
         for (GeneratedJob unreferencedJob : unreferenced) {
             Item removedItem = getLookupStrategy().getItem(seedJob, unreferencedJob.getJobName(), Item.class);
             if (removedItem != null && removedJobAction != RemovedJobAction.IGNORE) {
-                if ("com.cloudbees.hudson.plugins.folder.Folder".equals(removedItem.getClass().getName())) {
+                if ("com.cloudbees.hudson.plugins.folder.Folder"
+                        .equals(removedItem.getClass().getName())) {
                     folders.put(removedItem, unreferencedJob);
                     continue;
                 }
@@ -538,21 +539,22 @@ public class ExecuteDslScripts extends Builder implements SimpleBuildStep {
             }
         }
 
-		// remove extraneous folders after jobs have been deleted/shelved
-		if (removedJobAction == RemovedJobAction.DELETE || removedJobAction == RemovedJobAction.SHELVE) {
-			List<Item> foldersList = new LinkedList<>(folders.keySet());
-			// sort folders: children before parents
-			foldersList.sort((f1, f2) -> f2.getFullName().length() - f1.getFullName().length());
-			for (Item folder : foldersList) {
-				Collection<?> children = ((ItemGroup) folder).getItems();
-				// delete only empty folders
-				if (children == null || children.isEmpty()) {
-					GeneratedJob job = folders.get(folder);
-					folder.delete();
-					removed.add(job);
-				}
-			}
-		}
+        // remove extraneous folders after jobs have been deleted/shelved
+        if (removedJobAction == RemovedJobAction.DELETE || removedJobAction == RemovedJobAction.SHELVE) {
+            List<Item> foldersList = new LinkedList<>(folders.keySet());
+            // sort folders: children before parents
+            foldersList.sort(
+                    (f1, f2) -> f2.getFullName().length() - f1.getFullName().length());
+            for (Item folder : foldersList) {
+                Collection<?> children = ((ItemGroup) folder).getItems();
+                // delete only empty folders
+                if (children == null || children.isEmpty()) {
+                    GeneratedJob job = folders.get(folder);
+                    folder.delete();
+                    removed.add(job);
+                }
+            }
+        }
 
         // print what happened with unreferenced jobs
         logItems(listener, "Disabled items", disabled);
@@ -562,21 +564,25 @@ public class ExecuteDslScripts extends Builder implements SimpleBuildStep {
         updateGeneratedJobMap(seedJob, Sets.union(added, existing), unreferenced);
     }
 
-    private void shelve(Run<?,?> run, Item project, TaskListener listener) throws InterruptedException {
-       Jenkins jenkins = Jenkins.get();
-       if (project instanceof AccessControlled) {
-    	   ((AccessControlled) project).checkPermission(Item.DELETE);
-       } else {
-    	   jenkins.checkPermission(Item.DELETE);
-       }
+    private void shelve(Run<?, ?> run, Item project, TaskListener listener) throws InterruptedException {
+        Jenkins jenkins = Jenkins.get();
+        if (project instanceof AccessControlled) {
+            ((AccessControlled) project).checkPermission(Item.DELETE);
+        } else {
+            jenkins.checkPermission(Item.DELETE);
+        }
 
-       if (! (project instanceof BuildableItem)) {
-           failBuild(run, "Unable to shelve " + project + " since it is not a BuildableItem", listener, null);
-           return;
-       }
-       BuildableItem item = (BuildableItem) project;
+        if (!(project instanceof BuildableItem)) {
+            failBuild(run, "Unable to shelve " + project + " since it is not a BuildableItem", listener, null);
+            return;
+        }
+        BuildableItem item = (BuildableItem) project;
         if (jenkins.getPlugin(SHELVE_PLUGIN_ID) == null) {
-            failBuild(run, "Unable to shelve project " + item + " since the " + SHELVE_PLUGIN_ID + " plugin is not installed.", listener, null);
+            failBuild(
+                    run,
+                    "Unable to shelve project " + item + " since the " + SHELVE_PLUGIN_ID + " plugin is not installed.",
+                    listener,
+                    null);
             return;
         }
 
@@ -589,7 +595,7 @@ public class ExecuteDslScripts extends Builder implements SimpleBuildStep {
         }
     }
 
-    private void failBuild(Run<?,?> run, String message, TaskListener listener, @Nullable Exception ex) {
+    private void failBuild(Run<?, ?> run, String message, TaskListener listener, @Nullable Exception ex) {
         listener.error(message);
         if (ex != null) {
             ex.printStackTrace(listener.getLogger());
