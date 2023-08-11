@@ -1,9 +1,12 @@
 package javaposse.jobdsl.plugin
 
 import com.cloudbees.hudson.plugins.folder.Folder
+import com.cloudbees.hudson.plugins.folder.FolderIcon
+import com.cloudbees.hudson.plugins.folder.icons.StockFolderIcon
 import hudson.FilePath
 import hudson.model.AbstractItem
 import hudson.model.AbstractProject
+import hudson.model.BallColor
 import hudson.model.Computer
 import hudson.model.FreeStyleBuild
 import hudson.model.FreeStyleProject
@@ -25,7 +28,12 @@ import javaposse.jobdsl.plugin.actions.GeneratedViewsAction
 import javaposse.jobdsl.plugin.actions.GeneratedViewsBuildAction
 import javaposse.jobdsl.plugin.actions.SeedJobAction
 import javaposse.jobdsl.plugin.fixtures.ExampleJobDslExtension
+import jenkins.branch.MetadataActionFolderIcon
 import jenkins.model.Jenkins
+import jenkins.plugins.foldericon.BuildStatusFolderIcon
+import jenkins.plugins.foldericon.CustomFolderIcon
+import jenkins.plugins.foldericon.EmojiFolderIcon
+import jenkins.plugins.foldericon.IoniconFolderIcon
 import jenkins.security.QueueItemAuthenticator
 import jenkins.security.QueueItemAuthenticatorConfiguration
 import org.acegisecurity.Authentication
@@ -44,6 +52,7 @@ import org.jvnet.hudson.test.WithoutJenkins
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll
+
 import static hudson.model.Result.FAILURE
 import static hudson.model.Result.SUCCESS
 import static hudson.model.Result.UNSTABLE
@@ -101,6 +110,48 @@ listView('folder-a/test-view') {
 
 folder('folder-a/folder-b') {
   description('lorem ipsum')
+}"""
+
+    private static final String FOLDER_WITH_STOCK_ICON_SCRIPT = """folder('stock') {
+  icon {
+    stockFolderIcon()
+  }
+}"""
+
+    private static final String FOLDER_WITH_METADATA_ICON_SCRIPT = """folder('metadata') {
+  icon {
+    metadataActionFolderIcon()
+  }
+}"""
+
+    private static final String FOLDER_WITH_CUSTOM_ICON_SCRIPT = """folder('custom') {
+  icon {
+    customFolderIcon {
+      foldericon('custom.png')
+    }
+  }
+}"""
+
+    private static final String FOLDER_WITH_IONICON_ICON_SCRIPT = """folder('ionicon') {
+  icon {
+    ioniconFolderIcon {
+      ionicon('jenkins')
+    }
+  }
+}"""
+
+    private static final String FOLDER_WITH_BUILD_STATUS_ICON_SCRIPT = """folder('build-status') {
+  icon {
+    buildStatusFolderIcon()
+  }
+}"""
+
+    private static final String FOLDER_WITH_EMOJI_ICON_SCRIPT = """folder('emoji') {
+  icon {
+    emojiFolderIcon {
+      emoji('sloth')
+    }
+  }
 }"""
 
     @Shared
@@ -849,6 +900,24 @@ folder('folder-a/folder-b') {
         jenkinsRule.instance.getDescriptorByType(DescriptorImpl).generatedJobMap.size() == 0
     }
 
+    def "JENKINS-69064 Deleted jobs with different seeds but same templates are removed from GeneratedJobMap"() {
+        setup:
+        FreeStyleProject seedJob = jenkinsRule.createFreeStyleProject('seed')
+        FreeStyleProject seedJob2 = jenkinsRule.createFreeStyleProject('seed2')
+        jenkinsRule.createFreeStyleProject('template')
+        runBuild(seedJob, new ExecuteDslScripts('job("test-job") {\n using("template")\n}'))
+        runBuild(seedJob2, new ExecuteDslScripts('job("test-job-2") {\n using("template")\n}'))
+
+        when:
+        ExecuteDslScripts builder = new ExecuteDslScripts('// do nothing')
+        builder.removedJobAction = RemovedJobAction.DELETE
+        runBuild(seedJob, builder)
+        runBuild(seedJob2, builder)
+
+        then:
+        jenkinsRule.instance.getDescriptorByType(DescriptorImpl).generatedJobMap.size() == 0
+    }
+
     def "Manually deleted job is removed from GeneratedJobMap"() {
         setup:
         FreeStyleProject seedJob = jenkinsRule.createFreeStyleProject('seed')
@@ -922,6 +991,106 @@ folder('folder-a/folder-b') {
         then:
         jenkinsRule.instance.getItemByFullName('test-job', AbstractProject).getAction(
                 SeedJobAction).isConfigChanged()
+    }
+
+    def createFolderWithStockIcon() {
+        setup:
+        FreeStyleProject job = jenkinsRule.createFreeStyleProject('seed')
+        job.buildersList.add(new ExecuteDslScripts(FOLDER_WITH_STOCK_ICON_SCRIPT))
+
+        when:
+        FreeStyleBuild freeStyleBuild = job.scheduleBuild2(0).get()
+
+        then:
+        freeStyleBuild.result == SUCCESS
+        Item item = jenkinsRule.instance.getItemByFullName('stock')
+        item instanceof Folder
+        FolderIcon icon = ((Folder) item).getIcon()
+        icon instanceof StockFolderIcon
+    }
+
+    def createFolderWithMetadataIcon() {
+        setup:
+        FreeStyleProject job = jenkinsRule.createFreeStyleProject('seed')
+        job.buildersList.add(new ExecuteDslScripts(FOLDER_WITH_METADATA_ICON_SCRIPT))
+
+        when:
+        FreeStyleBuild freeStyleBuild = job.scheduleBuild2(0).get()
+
+        then:
+        freeStyleBuild.result == SUCCESS
+        Item item = jenkinsRule.instance.getItemByFullName('metadata')
+        item instanceof Folder
+        FolderIcon icon = ((Folder) item).getIcon()
+        icon instanceof MetadataActionFolderIcon
+    }
+
+    def createFolderWithCustomIcon() {
+        setup:
+        FreeStyleProject job = jenkinsRule.createFreeStyleProject('seed')
+        job.buildersList.add(new ExecuteDslScripts(FOLDER_WITH_CUSTOM_ICON_SCRIPT))
+
+        when:
+        FreeStyleBuild freeStyleBuild = job.scheduleBuild2(0).get()
+
+        then:
+        freeStyleBuild.result == SUCCESS
+        Item item = jenkinsRule.instance.getItemByFullName('custom')
+        item instanceof Folder
+        FolderIcon icon = ((Folder) item).getIcon()
+        icon instanceof CustomFolderIcon
+        ((CustomFolderIcon) icon).getFoldericon() == 'custom.png'
+    }
+
+    def createFolderWithIoniconIcon() {
+        setup:
+        FreeStyleProject job = jenkinsRule.createFreeStyleProject('seed')
+        job.buildersList.add(new ExecuteDslScripts(FOLDER_WITH_IONICON_ICON_SCRIPT))
+
+        when:
+        FreeStyleBuild freeStyleBuild = job.scheduleBuild2(0).get()
+
+        then:
+        freeStyleBuild.result == SUCCESS
+        Item item = jenkinsRule.instance.getItemByFullName('ionicon')
+        item instanceof Folder
+        FolderIcon icon = ((Folder) item).getIcon()
+        icon instanceof IoniconFolderIcon
+        ((IoniconFolderIcon) icon).getIonicon() == 'jenkins'
+    }
+
+    def createFolderWithBuildStatusIcon() {
+        setup:
+        FreeStyleProject job = jenkinsRule.createFreeStyleProject('seed')
+        job.buildersList.add(new ExecuteDslScripts(FOLDER_WITH_BUILD_STATUS_ICON_SCRIPT))
+
+        when:
+        FreeStyleBuild freeStyleBuild = job.scheduleBuild2(0).get()
+
+        then:
+        freeStyleBuild.result == SUCCESS
+        Item item = jenkinsRule.instance.getItemByFullName('build-status')
+        item instanceof Folder
+        FolderIcon icon = ((Folder) item).getIcon()
+        icon instanceof BuildStatusFolderIcon
+        ((BuildStatusFolderIcon) icon).getIconClassName() == BallColor.NOTBUILT.getIconClassName()
+    }
+
+    def createFolderWithEmojiIcon() {
+        setup:
+        FreeStyleProject job = jenkinsRule.createFreeStyleProject('seed')
+        job.buildersList.add(new ExecuteDslScripts(FOLDER_WITH_EMOJI_ICON_SCRIPT))
+
+        when:
+        FreeStyleBuild freeStyleBuild = job.scheduleBuild2(0).get()
+
+        then:
+        freeStyleBuild.result == SUCCESS
+        Item item = jenkinsRule.instance.getItemByFullName('emoji')
+        item instanceof Folder
+        FolderIcon icon = ((Folder) item).getIcon()
+        icon instanceof EmojiFolderIcon
+        ((EmojiFolderIcon) icon).getEmoji() == 'sloth'
     }
 
     def createJobInFolder() {
@@ -1363,6 +1532,7 @@ folder('folder-a/folder-b') {
         jenkinsRule.instance.rootPath.child('userContent').child('foo.txt').readToString().trim() == 'lorem ipsum'
     }
 
+    @SuppressWarnings('LineLength')
     def 'deprecation warning in DSL script with unstableOnDeprecation set to #{unstableOnDeprecation}'() {
         setup:
         FreeStyleProject job = jenkinsRule.createFreeStyleProject('seed')
@@ -1376,7 +1546,7 @@ folder('folder-a/folder-b') {
 
         then:
         build.getLog(25).join('\n') =~
-    /Warning: \(script, line 1\) support for Matrix Authorization Strategy Plugin versions older than 2.0 is deprecated/
+                /Warning: \(script, line 1\) support for Matrix Authorization Strategy Plugin versions older than 999999.0 is deprecated/
         build.result == result
 
         where:

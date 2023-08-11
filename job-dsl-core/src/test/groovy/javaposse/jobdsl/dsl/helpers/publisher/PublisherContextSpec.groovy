@@ -92,7 +92,7 @@ class PublisherContextSpec extends Specification {
         value << ['', null, 'default']
     }
 
-    def 'call extendedEmail with all options'() {
+    def 'call extendedEmail with all options except failure count'() {
         when:
         context.extendedEmail {
             recipientList('me@example.org', 'you@example.org')
@@ -217,6 +217,7 @@ class PublisherContextSpec extends Specification {
         'aborted'        || 'AbortedTrigger'
         'always'         || 'AlwaysTrigger'
         'beforeBuild'    || 'PreBuildTrigger'
+        'building'       || 'BuildingTrigger'
         'firstFailure'   || 'FirstFailureTrigger'
         'secondFailure'  || 'SecondFailureTrigger'
         'failure'        || 'FailureTrigger'
@@ -231,6 +232,136 @@ class PublisherContextSpec extends Specification {
         'firstUnstable'  || 'FirstUnstableTrigger'
         'stillUnstable'  || 'StillUnstableTrigger'
         'fixedUnhealthy' || 'FixedUnhealthyTrigger'
+    }
+
+    def 'call extendedEmail with all options including failure count'() {
+        when:
+        context.extendedEmail {
+            recipientList('me@example.org', 'you@example.org')
+            recipientList('other@example.org')
+            contentType('text/plain')
+            defaultSubject('Important')
+            defaultContent('read me')
+            attachmentPatterns('*.log', '**/report.html')
+            attachmentPatterns('foo.txt')
+            preSendScript('a script')
+            additionalGroovyClasspath('foo.jar', 'bar.jar')
+            additionalGroovyClasspath('my.jar')
+            attachBuildLog()
+            compressBuildLog()
+            replyToList('someone@example.org')
+            replyToList('test@example.org', 'ci@example.org')
+            saveToWorkspace()
+            disabled()
+            triggers {
+                "${trigger}" {
+                    sendTo {
+                        culprits()
+                        developers()
+                        recipientList()
+                        requester()
+                        failingTestSuspects()
+                        firstFailingBuildSuspects()
+                        upstreamCommitter()
+                    }
+                    recipientList('test@example.org', 'foo@example.org')
+                    recipientList('lala@example.org')
+                    contentType('text/html')
+                    subject('Lorem')
+                    content('Ipsum')
+                    attachmentPatterns('test*.html', '*.xml')
+                    attachmentPatterns('hello.txt')
+                    attachBuildLog()
+                    compressBuildLog()
+                    replyToList('one@example.org')
+                    replyToList('two@example.org', 'three@example.org')
+                    failureCount(5)
+                }
+            }
+            configure {
+                it / foo('bar')
+            }
+        }
+
+        then:
+        context.publisherNodes.size() == 1
+        with(context.publisherNodes[0]) {
+            name() == 'hudson.plugins.emailext.ExtendedEmailPublisher'
+            children().size() == 14
+            recipientList[0].value() == 'me@example.org, you@example.org, other@example.org'
+            contentType[0].value() == 'text/plain'
+            defaultSubject[0].value() == 'Important'
+            defaultContent[0].value() == 'read me'
+            attachmentsPattern[0].value() == '*.log, **/report.html, foo.txt'
+            presendScript[0].value() == 'a script'
+            with(classpath[0]) {
+                children().size() == 3
+                with(children()[0]) {
+                    name() == 'hudson.plugins.emailext.GroovyScriptPath'
+                    children().size() == 1
+                    path[0].value() == 'foo.jar'
+                }
+                with(children()[1]) {
+                    name() == 'hudson.plugins.emailext.GroovyScriptPath'
+                    children().size() == 1
+                    path[0].value() == 'bar.jar'
+                }
+                with(children()[2]) {
+                    name() == 'hudson.plugins.emailext.GroovyScriptPath'
+                    children().size() == 1
+                    path[0].value() == 'my.jar'
+                }
+            }
+            attachBuildLog[0].value() == true
+            compressBuildLog[0].value() == true
+            replyTo[0].value() == 'someone@example.org, test@example.org, ci@example.org'
+            saveOutput[0].value() == true
+            disabled[0].value() == true
+            with(configuredTriggers[0]) {
+                children().size() == 1
+                with(children()[0]) {
+                    name() == "hudson.plugins.emailext.plugins.trigger.${className}"
+                    children().size() == 2
+                    with(children()[0]) {
+                        name() == 'requiredFailureCount'
+                        value() == 5
+                    }
+                    with(email[0]) {
+                        children().size() == 9
+                        recipientList[0].value() == 'test@example.org, foo@example.org, lala@example.org'
+                        subject[0].value() == 'Lorem'
+                        body[0].value() == 'Ipsum'
+                        with(recipientProviders[0]) {
+                            children().size() == 7
+                            children()[0].name() ==
+                                'hudson.plugins.emailext.plugins.recipients.CulpritsRecipientProvider'
+                            children()[1].name() ==
+                                'hudson.plugins.emailext.plugins.recipients.DevelopersRecipientProvider'
+                            children()[2].name() ==
+                                'hudson.plugins.emailext.plugins.recipients.ListRecipientProvider'
+                            children()[3].name() ==
+                                'hudson.plugins.emailext.plugins.recipients.RequesterRecipientProvider'
+                            children()[4].name() ==
+                                'hudson.plugins.emailext.plugins.recipients.FailingTestSuspectsRecipientProvider'
+                            children()[5].name() ==
+                                'hudson.plugins.emailext.plugins.recipients.FirstFailingBuildSuspectsRecipientProvider'
+                            children()[6].name() ==
+                                'hudson.plugins.emailext.plugins.recipients.UpstreamComitterRecipientProvider'
+                        }
+                        attachmentsPattern[0].value() == 'test*.html, *.xml, hello.txt'
+                        attachBuildLog[0].value() == true
+                        compressBuildLog[0].value() == true
+                        replyTo[0].value() == 'one@example.org, two@example.org, three@example.org'
+                        contentType[0].value() == 'text/html'
+                    }
+                }
+            }
+            foo[0].value() == 'bar'
+        }
+
+        where:
+        trigger          || className
+        'xNthFailure'    || 'XNthFailureTrigger'
     }
 
     def 'call standard mailer method'() {
@@ -270,13 +401,15 @@ class PublisherContextSpec extends Specification {
         then:
         with(context.publisherNodes[0]) {
             name() == 'hudson.tasks.ArtifactArchiver'
-            children().size() == 6
+            children().size() == 8
             artifacts[0].value() == 'include/*'
             excludes[0].value() == 'exclude/*'
             allowEmptyArchive[0].value() == false
             fingerprint[0].value() == false
             onlyIfSuccessful[0].value() == false
             defaultExcludes[0].value() == true
+            followSymlinks[0].value() == true
+            caseSensitive[0].value() == true
         }
     }
 
@@ -287,12 +420,14 @@ class PublisherContextSpec extends Specification {
         then:
         with(context.publisherNodes[0]) {
             name() == 'hudson.tasks.ArtifactArchiver'
-            children().size() == 5
+            children().size() == 7
             artifacts[0].value() == 'include/*'
             allowEmptyArchive[0].value() == false
             fingerprint[0].value() == false
             onlyIfSuccessful[0].value() == false
             defaultExcludes[0].value() == true
+            followSymlinks[0].value() == true
+            caseSensitive[0].value() == true
         }
     }
 
@@ -310,13 +445,15 @@ class PublisherContextSpec extends Specification {
         then:
         with(context.publisherNodes[0]) {
             name() == 'hudson.tasks.ArtifactArchiver'
-            children().size() == 6
+            children().size() == 8
             artifacts[0].value() == 'include/*'
             excludes[0].value() == 'exclude/*'
             allowEmptyArchive[0].value() == true
             fingerprint[0].value() == true
             onlyIfSuccessful[0].value() == true
             defaultExcludes[0].value() == false
+            followSymlinks[0].value() == true
+            caseSensitive[0].value() == true
         }
     }
 
@@ -330,12 +467,14 @@ class PublisherContextSpec extends Specification {
         then:
         with(context.publisherNodes[0]) {
             name() == 'hudson.tasks.ArtifactArchiver'
-            children().size() == 5
+            children().size() == 7
             artifacts[0].value() == 'include1/*,include2/*'
             allowEmptyArchive[0].value() == false
             fingerprint[0].value() == false
             onlyIfSuccessful[0].value() == false
             defaultExcludes[0].value() == true
+            followSymlinks[0].value() == true
+            caseSensitive[0].value() == true
         }
     }
 
@@ -3525,105 +3664,6 @@ class PublisherContextSpec extends Specification {
         then:
         Exception e = thrown(DslScriptException)
         e.message =~ 'can only be using in matrix jobs'
-    }
-
-    def 'call post build scripts with minimal options'() {
-        when:
-        context.postBuildScripts {
-        }
-
-        then:
-        with(context.publisherNodes[0]) {
-            name() == 'org.jenkinsci.plugins.postbuildscript.PostBuildScript'
-            children().size() == 4
-            buildSteps[0].children().size == 0
-            scriptOnlyIfSuccess[0].value() == true
-            scriptOnlyIfFailure[0].value() == false
-            markBuildUnstable[0].value() == false
-        }
-        1 * jobManagement.requireMinimumPluginVersion('postbuildscript', '0.17')
-    }
-
-    def 'call post build scripts with all options'() {
-        when:
-        context.postBuildScripts {
-            steps {
-                shell('echo TEST')
-            }
-            onlyIfBuildSucceeds(value)
-            onlyIfBuildFails(value)
-            markBuildUnstable(value)
-        }
-
-        then:
-        with(context.publisherNodes[0]) {
-            name() == 'org.jenkinsci.plugins.postbuildscript.PostBuildScript'
-            children().size() == 4
-            buildSteps[0].children().size == 1
-            buildSteps[0].children()[0].name() == 'hudson.tasks.Shell'
-            scriptOnlyIfSuccess[0].value() == value
-            scriptOnlyIfFailure[0].value() == value
-            markBuildUnstable[0].value() == value
-        }
-        1 * jobManagement.requireMinimumPluginVersion('postbuildscript', '0.17')
-
-        where:
-        value << [true, false]
-    }
-
-    def 'call post build scripts with minimal options and matrix job'() {
-        setup:
-        Item item = new MatrixJob(jobManagement, 'test')
-        PublisherContext context = new PublisherContext(jobManagement, item)
-
-        when:
-        context.postBuildScripts {
-        }
-
-        then:
-        with(context.publisherNodes[0]) {
-            name() == 'org.jenkinsci.plugins.postbuildscript.PostBuildScript'
-            children().size() == 5
-            buildSteps[0].children().size == 0
-            scriptOnlyIfSuccess[0].value() == true
-            scriptOnlyIfFailure[0].value() == false
-            markBuildUnstable[0].value() == false
-            executeOn[0].value() == 'BOTH'
-        }
-        1 * jobManagement.requireMinimumPluginVersion('postbuildscript', '0.17')
-    }
-
-    def 'call post build scripts with all options and matrix job'() {
-        setup:
-        Item item = new MatrixJob(jobManagement, 'test')
-        PublisherContext context = new PublisherContext(jobManagement, item)
-
-        when:
-        context.postBuildScripts {
-            steps {
-                shell('echo TEST')
-            }
-            onlyIfBuildSucceeds(false)
-            onlyIfBuildFails()
-            markBuildUnstable()
-            executeOn(mode)
-        }
-
-        then:
-        with(context.publisherNodes[0]) {
-            name() == 'org.jenkinsci.plugins.postbuildscript.PostBuildScript'
-            children().size() == 5
-            buildSteps[0].children().size == 1
-            buildSteps[0].children()[0].name() == 'hudson.tasks.Shell'
-            scriptOnlyIfSuccess[0].value() == false
-            scriptOnlyIfFailure[0].value() == true
-            markBuildUnstable[0].value() == true
-            executeOn[0].value() == mode
-        }
-        1 * jobManagement.requireMinimumPluginVersion('postbuildscript', '0.17')
-
-        where:
-        mode << ['MATRIX', 'AXES', 'BOTH']
     }
 
     def 'call sonar with no options'() {
