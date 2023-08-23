@@ -1,4 +1,6 @@
 target
+.factorypath
+eclipse-target/
 
 # mvn hpi:run
 work
