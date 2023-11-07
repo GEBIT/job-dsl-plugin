@@ -6,7 +6,6 @@ on:
       - master
     paths:
       - "docs/**"
-      - "pom.xml"
   workflow_dispatch:
 
 permissions:
@@ -17,11 +16,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: job-dsl-plugin
       - name: Checkout wiki
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: ${{github.repository}}.wiki
           path: job-dsl-plugin.wiki

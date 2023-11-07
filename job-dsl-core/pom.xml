@@ -7,6 +7,7 @@
     <version>${revision}${changelist}</version>
   </parent>
   <artifactId>job-dsl-core</artifactId>
+  <version>1.87</version>
   <name>Job DSL Core</name>
   <dependencies>
     <dependency>

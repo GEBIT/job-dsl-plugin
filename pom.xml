@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.jenkins-ci.plugins</groupId>
     <artifactId>plugin</artifactId>
-    <version>4.65</version>
+    <version>4.74</version>
     <relativePath />
   </parent>
   <artifactId>job-dsl-parent</artifactId>
@@ -30,7 +30,7 @@
     <url>https://github.com/${gitHubRepo}</url>
   </scm>
   <properties>
-    <revision>1.84</revision>
+    <revision>1.87</revision>
     <changelist>-SNAPSHOT</changelist>
     <gitHubRepo>jenkinsci/job-dsl-plugin</gitHubRepo>
     <jenkins.version>2.387.1</jenkins.version>
