@@ -7,7 +7,6 @@
     <version>${revision}${changelist}</version>
   </parent>
   <artifactId>job-dsl</artifactId>
-  <version>1.87</version>
   <packaging>hpi</packaging>
   <name>Job DSL</name>
   <url>https://github.com/jenkinsci/job-dsl-plugin</url>
