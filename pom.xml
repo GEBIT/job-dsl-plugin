@@ -30,7 +30,7 @@
     <url>https://github.com/${gitHubRepo}</url>
   </scm>
   <properties>
-    <revision>1.91</revision>
+    <revision>1.90</revision>
     <changelist>-SNAPSHOT</changelist>
     <gitHubRepo>jenkinsci/job-dsl-plugin</gitHubRepo>
     <!-- https://www.jenkins.io/doc/developer/plugin-development/choosing-jenkins-baseline/ -->
