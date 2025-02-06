@@ -22,6 +22,7 @@ import hudson.model.AbstractBuild;
 import hudson.model.AbstractItem;
 import hudson.model.BuildableItem;
 import hudson.model.Descriptor;
+import hudson.model.Failure;
 import hudson.model.Item;
 import hudson.model.ItemGroup;
 import hudson.model.Items;
@@ -47,6 +48,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javaposse.jobdsl.dsl.DslException;
@@ -506,6 +509,7 @@ public class ExecuteDslScripts extends Builder implements SimpleBuildStep {
         Set<GeneratedJob> removed = new HashSet<>();
         Set<GeneratedJob> shelved = new HashSet<>();
         Set<GeneratedJob> disabled = new HashSet<>();
+        Set<GeneratedJob> jobsToRetry = new HashSet<>();
         Map<Item, GeneratedJob> folders = new IdentityHashMap<>();
 
         logItems(listener, "Added items", added);
@@ -523,11 +527,21 @@ public class ExecuteDslScripts extends Builder implements SimpleBuildStep {
                 }
 
                 if (removedJobAction == RemovedJobAction.DELETE) {
-                    removedItem.delete();
-                    removed.add(unreferencedJob);
+                    String fullName = removedItem.getFullName();
+                    try {
+                        removedItem.delete();
+                        removed.add(unreferencedJob);
+                    } catch (Failure ex) {
+                        jobsToRetry.add(unreferencedJob);
+                    }
                 } else if (removedJobAction == RemovedJobAction.SHELVE) {
-                    shelve(run, removedItem, listener);
-                    shelved.add(unreferencedJob);
+                    String fullName = removedItem.getFullName();
+                    try {
+                        shelve(run, removedItem, listener);
+                        shelved.add(unreferencedJob);
+                    } catch (TimeoutException | ExecutionException | InterruptedException ex) {
+                        jobsToRetry.add(unreferencedJob);
+                    }
                 } else {
                     if (removedItem instanceof ParameterizedJob) {
                         ParameterizedJob project = (ParameterizedJob) removedItem;
@@ -560,11 +574,18 @@ public class ExecuteDslScripts extends Builder implements SimpleBuildStep {
         logItems(listener, "Disabled items", disabled);
         logItems(listener, "Removed items", removed);
         logItems(listener, "Shelved items", shelved);
+        if (jobsToRetry.size() > 0) {
+            logItems(listener, "Items that could not be deleted or shelved", jobsToRetry);
+            run.getAction(GeneratedJobsBuildAction.class).addModifiedObjects(jobsToRetry);
+        }
 
-        updateGeneratedJobMap(seedJob, Sets.union(added, existing), unreferenced);
+        Set<GeneratedJob> successfullyUnreferenced = new HashSet<>(unreferenced);
+        successfullyUnreferenced.removeAll(jobsToRetry);
+        updateGeneratedJobMap(seedJob, Sets.union(added, existing), successfullyUnreferenced);
     }
 
-    private void shelve(Run<?, ?> run, Item project, TaskListener listener) throws InterruptedException {
+    private void shelve(Run<?, ?> run, Item project, TaskListener listener)
+            throws ExecutionException, TimeoutException, InterruptedException {
         Jenkins jenkins = Jenkins.get();
         if (project instanceof AccessControlled) {
             ((AccessControlled) project).checkPermission(Item.DELETE);
@@ -589,9 +610,10 @@ public class ExecuteDslScripts extends Builder implements SimpleBuildStep {
         Queue.WaitingItem waitingItem = jenkins.getQueue().schedule(new ShelveProjectTask(item), 0);
         QueueTaskFuture<Queue.Executable> future = waitingItem.getFuture();
         try {
-            future.get(); // wait for completion so that upper folders can be deleted
+            future.get(1, TimeUnit.MINUTES); // wait for completion so that upper folders can be deleted
         } catch (ExecutionException ex) {
             failBuild(run, "Error shelving project " + project, listener, ex);
+            throw ex;
         }
     }
 
