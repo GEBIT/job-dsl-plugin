@@ -42,10 +42,12 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -509,7 +511,8 @@ public class ExecuteDslScripts extends Builder implements SimpleBuildStep {
         Set<GeneratedJob> removed = new HashSet<>();
         Set<GeneratedJob> shelved = new HashSet<>();
         Set<GeneratedJob> disabled = new HashSet<>();
-        Set<GeneratedJob> jobsToRetry = new HashSet<>();
+        Set<GeneratedJob> foldersToRetry = new HashSet<>();
+        Map<Item, GeneratedJob> jobsToRetry = new IdentityHashMap<>();
         Map<Item, GeneratedJob> folders = new IdentityHashMap<>();
 
         logItems(listener, "Added items", added);
@@ -527,20 +530,18 @@ public class ExecuteDslScripts extends Builder implements SimpleBuildStep {
                 }
 
                 if (removedJobAction == RemovedJobAction.DELETE) {
-                    String fullName = removedItem.getFullName();
                     try {
                         removedItem.delete();
                         removed.add(unreferencedJob);
                     } catch (Failure ex) {
-                        jobsToRetry.add(unreferencedJob);
+                        jobsToRetry.put(removedItem, unreferencedJob);
                     }
                 } else if (removedJobAction == RemovedJobAction.SHELVE) {
-                    String fullName = removedItem.getFullName();
                     try {
                         shelve(run, removedItem, listener);
                         shelved.add(unreferencedJob);
                     } catch (TimeoutException | ExecutionException | InterruptedException ex) {
-                        jobsToRetry.add(unreferencedJob);
+                        jobsToRetry.put(removedItem, unreferencedJob);
                     }
                 } else {
                     if (removedItem instanceof ParameterizedJob) {
@@ -548,6 +549,20 @@ public class ExecuteDslScripts extends Builder implements SimpleBuildStep {
                         project.checkPermission(Item.CONFIGURE);
                         project.makeDisabled(true);
                         disabled.add(unreferencedJob);
+                    }
+                }
+            }
+        }
+
+        if (jobsToRetry.size() > 0) {
+            for (Iterator<Entry<Item, GeneratedJob>> it = folders.entrySet().iterator(); it.hasNext(); ) {
+                Entry<Item, GeneratedJob> folderEntry = it.next();
+                String folderFullName = folderEntry.getKey().getFullName();
+                for (Item jobToRetry : jobsToRetry.keySet()) {
+                    if (jobToRetry.getFullName().startsWith(folderFullName + "/")) {
+                        foldersToRetry.add(folderEntry.getValue());
+                        it.remove();
+                        break;
                     }
                 }
             }
@@ -575,12 +590,17 @@ public class ExecuteDslScripts extends Builder implements SimpleBuildStep {
         logItems(listener, "Removed items", removed);
         logItems(listener, "Shelved items", shelved);
         if (jobsToRetry.size() > 0) {
-            logItems(listener, "Items that could not be deleted or shelved", jobsToRetry);
-            run.getAction(GeneratedJobsBuildAction.class).addModifiedObjects(jobsToRetry);
+            logItems(listener, "Items that could not be deleted or shelved", jobsToRetry.values());
+            run.getAction(GeneratedJobsBuildAction.class).addModifiedObjects(jobsToRetry.values());
+        }
+        if (foldersToRetry.size() > 0) {
+            logItems(listener, "Folders that could not be deleted", foldersToRetry);
+            run.getAction(GeneratedJobsBuildAction.class).addModifiedObjects(foldersToRetry);
         }
 
         Set<GeneratedJob> successfullyUnreferenced = new HashSet<>(unreferenced);
-        successfullyUnreferenced.removeAll(jobsToRetry);
+        successfullyUnreferenced.removeAll(jobsToRetry.values());
+        successfullyUnreferenced.removeAll(foldersToRetry);
         updateGeneratedJobMap(seedJob, Sets.union(added, existing), successfullyUnreferenced);
     }
 
