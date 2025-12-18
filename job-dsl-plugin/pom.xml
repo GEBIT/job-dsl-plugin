@@ -54,7 +54,7 @@
       <dependency>
         <groupId>io.jenkins.tools.bom</groupId>
         <artifactId>bom-${jenkins.baseline}.x</artifactId>
-        <version>4607.v67a_4791074d7</version>
+        <version>4862.vc32a_71c3e731</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -151,7 +151,7 @@
     <dependency>
       <groupId>org.jenkins-ci.plugins</groupId>
       <artifactId>nested-view</artifactId>
-      <version>1.36</version>
+      <version>241.v178f0b_a_cd76a_</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -196,6 +196,11 @@
                   <version>${project.version}</version>
                 </artifactItem>
                 <!-- After releasing a new version, add it to the list here! -->
+                <artifactItem>
+                  <groupId>${project.groupId}</groupId>
+                  <artifactId>job-dsl-core</artifactId>
+                  <version>1.92</version>
+                </artifactItem>
                 <artifactItem>
                   <groupId>${project.groupId}</groupId>
                   <artifactId>job-dsl-core</artifactId>

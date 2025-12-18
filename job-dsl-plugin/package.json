@@ -6,11 +6,11 @@
   "scripts": {
     "mvnbuild": "npm run build && npm run gh-pages",
     "mvntest": "npm run test",
-    "test": "eslint --config .eslintrc.js",
-    "watch": "webpack --watch --config webpack.dev.js",
-    "start": "webpack serve --open --config webpack.dev.js",
-    "build": "webpack --config webpack.plugin.js",
-    "gh-pages": "webpack --config webpack.gh-pages.js"
+    "test": "eslint --config eslint.config.mjs",
+    "watch": "webpack --watch --config webpack.dev.mjs",
+    "start": "webpack serve --open --config webpack.dev.mjs",
+    "build": "webpack --config webpack.plugin.mjs",
+    "gh-pages": "webpack --config webpack.gh-pages.mjs"
   },
   "repository": {
     "type": "git",
@@ -29,20 +29,22 @@
     "underscore": "1.13.7"
   },
   "devDependencies": {
+    "@eslint/js": "^9.28.0",
     "copy-webpack-plugin": "13.0.0",
     "css-loader": "7.1.2",
     "css-minimizer-webpack-plugin": "7.0.2",
-    "eslint": "8.42.0",
+    "eslint": "9.28.0",
+    "globals": "^16.2.0",
     "handlebars": "4.7.8",
     "handlebars-loader": "1.7.3",
     "html-webpack-plugin": "5.6.3",
     "less": "4.3.0",
-    "less-loader": "12.2.0",
+    "less-loader": "12.3.0",
     "mini-css-extract-plugin": "2.9.2",
     "style-loader": "4.0.0",
-    "webpack": "5.98.0",
+    "webpack": "5.99.9",
     "webpack-cli": "6.0.1",
-    "webpack-dev-server": "5.2.1",
+    "webpack-dev-server": "5.2.2",
     "webpack-merge": "6.0.1"
   }
 }
