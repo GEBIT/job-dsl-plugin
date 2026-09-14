@@ -13,19 +13,21 @@ permissions:
 
 jobs:
   push-to-wiki:
+    # Only push to wiki from repository in jenkinsci GitHub organization
+    if: ${{ github.repository_owner == 'jenkinsci' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           path: job-dsl-plugin
       - name: Checkout wiki
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: ${{github.repository}}.wiki
           path: job-dsl-plugin.wiki
       - name: Set up Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5.7.0
         with:
           distribution: 'temurin'
           java-version: '17'
@@ -42,9 +44,9 @@ jobs:
           sudo ln -s /opt/maven/bin/mvn /usr/bin/mvn
           mvn --version
         env:
-          MAVEN_VERSION: 3.9.9
-          # https://downloads.apache.org/maven/maven-3/3.9.9/binaries/apache-maven-3.9.9-bin.tar.gz.sha512
-          CHECKSUM: a555254d6b53d267965a3404ecb14e53c3827c09c3b94b5678835887ab404556bfaf78dcfe03ba76fa2508649dca8531c74bca4d5846513522404d48e8c4ac8b
+          MAVEN_VERSION: 3.9.16
+          # https://downloads.apache.org/maven/maven-3/3.9.16/binaries/apache-maven-3.9.16-bin.tar.gz.sha512
+          CHECKSUM: 831a8591fe20c8243b1dbe7d71e3244f31d1665b0804b2e825e38cbbe5ce0cafb8338851f90780735568773e0a6cd07bbec107cda0b896b008b861075358b6f6
       - name: Push to wiki
         run: |
           git config --global user.email "actions@users.noreply.github.com"

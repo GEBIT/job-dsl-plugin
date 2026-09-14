@@ -4,9 +4,10 @@
   <parent>
     <groupId>org.jenkins-ci.plugins</groupId>
     <artifactId>job-dsl-parent</artifactId>
-    <version>${revision}${changelist}</version>
+    <version>${changelist}</version>
   </parent>
   <artifactId>job-dsl</artifactId>
+  <version>${changelist}</version>
   <packaging>hpi</packaging>
   <name>Job DSL</name>
   <url>https://github.com/jenkinsci/job-dsl-plugin</url>
@@ -16,45 +17,20 @@
       <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
     </license>
   </licenses>
-  <developers>
-    <developer>
-      <id>quidryan</id>
-      <name>Justin Ryan</name>
-      <email>jryan@netflix.com</email>
-    </developer>
-    <developer>
-      <id>andrewharmellaw</id>
-      <name>Andrew Harmel-Law</name>
-      <email>andrew@harmel-law.com</email>
-    </developer>
-    <developer>
-      <id>daspilker</id>
-      <name>Daniel Spilker</name>
-      <email>mail@daniel-spilker.com</email>
-    </developer>
-    <developer>
-      <id>jamietanna</id>
-      <name>Jamie Tanna</name>
-      <email>jenkins@jamietanna.co.uk</email>
-    </developer>
-    <developer>
-      <id>sheehan</id>
-      <name>Matt Sheehan</name>
-      <email>mr.sheehan@gmail.com</email>
-    </developer>
-  </developers>
   <properties>
     <!-- TODO GMavenPlus does not support Javadoc -->
     <maven.javadoc.skip>true</maven.javadoc.skip>
-    <node.version>20.17.0</node.version>
-    <npm.version>10.8.2</npm.version>
+    <node.version>24.13.0</node.version>
+    <npm.version>11.6.2</npm.version>
+    <hpi.bundledArtifacts>job-dsl-core,xmlunit</hpi.bundledArtifacts>
+    <hpi.strictBundledArtifacts>true</hpi.strictBundledArtifacts>
   </properties>
   <dependencyManagement>
     <dependencies>
       <dependency>
         <groupId>io.jenkins.tools.bom</groupId>
         <artifactId>bom-${jenkins.baseline}.x</artifactId>
-        <version>4862.vc32a_71c3e731</version>
+        <version>5054.v620b_5d2b_d5e6</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -89,6 +65,14 @@
       <optional>true</optional>
     </dependency>
     <dependency>
+      <groupId>io.jenkins.plugins</groupId>
+      <artifactId>commons-lang3-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.jenkins.plugins</groupId>
+      <artifactId>commons-text-api</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.jenkins-ci.plugins</groupId>
       <artifactId>branch-api</artifactId>
     </dependency>
@@ -118,15 +102,8 @@
     <dependency>
       <groupId>org.jenkins-ci.plugins</groupId>
       <artifactId>vsphere-cloud</artifactId>
-      <version>2.27</version>
+      <version>3.512.vfb_0824b_5068c</version>
       <optional>true</optional>
-      <exclusions>
-        <!-- TODO pending https://github.com/jenkinsci/vsphere-cloud-plugin/pull/135 -->
-        <exclusion>
-          <groupId>log4j</groupId>
-          <artifactId>log4j</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
     <dependency>
       <groupId>io.jenkins.configuration-as-code</groupId>
@@ -196,6 +173,16 @@
                   <version>${project.version}</version>
                 </artifactItem>
                 <!-- After releasing a new version, add it to the list here! -->
+                <artifactItem>
+                  <groupId>${project.groupId}</groupId>
+                  <artifactId>job-dsl-core</artifactId>
+                  <version>3654.vdf58f53e2d15</version>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>${project.groupId}</groupId>
+                  <artifactId>job-dsl-core</artifactId>
+                  <version>1.93</version>
+                </artifactItem>
                 <artifactItem>
                   <groupId>${project.groupId}</groupId>
                   <artifactId>job-dsl-core</artifactId>
