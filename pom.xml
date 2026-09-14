@@ -33,12 +33,6 @@
     <revision>1.93</revision>
     <changelist>-SNAPSHOT</changelist>
     <gitHubRepo>jenkinsci/job-dsl-plugin</gitHubRepo>
-    <!-- https://www.jenkins.io/doc/developer/plugin-development/choosing-jenkins-baseline/ -->
-    <jenkins.baseline>2.479</jenkins.baseline>
-    <jenkins.version>${jenkins.baseline}.3</jenkins.version>
-    <!-- TODO fix violations -->
-    <spotbugs.threshold>High</spotbugs.threshold>
-    <spotless.check.skip>false</spotless.check.skip>
     <!-- GEBIT: versions to be used for gebit-build support -->
     <java.version>21</java.version>
     <version.tiles>2.8-gebit42</version.tiles>
@@ -51,6 +45,12 @@
     <version.maven-enforcer-plugin>${maven-enforcer-plugin.version}</version.maven-enforcer-plugin>
     <version.maven-surefire-plugin>${maven-surefire-plugin.version}</version.maven-surefire-plugin>
     <!-- GEBIT: end -->
+    <!-- https://www.jenkins.io/doc/developer/plugin-development/choosing-jenkins-baseline/ -->
+    <jenkins.baseline>2.479</jenkins.baseline>
+    <jenkins.version>${jenkins.baseline}.3</jenkins.version>
+    <!-- TODO fix violations -->
+    <spotbugs.threshold>High</spotbugs.threshold>
+    <spotless.check.skip>false</spotless.check.skip>
   </properties>
   <dependencyManagement>
     <dependencies>
