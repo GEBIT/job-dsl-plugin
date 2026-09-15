@@ -8,7 +8,7 @@
     <relativePath />
   </parent>
   <artifactId>job-dsl-parent</artifactId>
-  <version>${changelist}</version>
+  <version>3732.v9a_c49a_61a_313-gebit1</version>
   <packaging>pom</packaging>
   <name>Job DSL Parent</name>
   <url>https://github.com/jenkinsci/job-dsl-plugin</url>

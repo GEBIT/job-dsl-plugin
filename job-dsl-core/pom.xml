@@ -4,10 +4,10 @@
   <parent>
     <groupId>org.jenkins-ci.plugins</groupId>
     <artifactId>job-dsl-parent</artifactId>
-    <version>${changelist}</version>
+    <version>3732.v9a_c49a_61a_313-gebit1</version>
   </parent>
   <artifactId>job-dsl-core</artifactId>
-  <version>${changelist}</version>
+  <version>3732.v9a_c49a_61a_313-gebit1</version>
   <name>Job DSL Core</name>
   <dependencies>
     <dependency>
