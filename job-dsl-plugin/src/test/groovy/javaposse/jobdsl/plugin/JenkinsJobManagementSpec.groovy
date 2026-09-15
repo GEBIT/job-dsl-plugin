@@ -524,7 +524,7 @@ class JenkinsJobManagementSpec extends Specification {
         jobManagement.createOrUpdateConfig(createItem('project', '/config.xml'), false)
 
         then:
-        1 * saveableListener.onChange(job, _)
+        0 * saveableListener.onChange(job, _)
     }
 
     def 'createOrUpdateConfig skips update after Jenkins re-serialized the config (JENKINS-38741)'() {
