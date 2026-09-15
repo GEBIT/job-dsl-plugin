@@ -36,12 +36,14 @@
     <!-- GEBIT: versions to be used for gebit-build support -->
     <java.version>21</java.version>
     <version.tiles>2.8-gebit42</version.tiles>
+    <!-- gebit-build 3.12.0+ changes the order for maven-dependency-plugin execution that leads to a failed build -->
     <version.build>3.11.0</version.build>
     <version.gebit-build-extension>2.1.0</version.gebit-build-extension>
     <version.gebit-forked>1.0.8</version.gebit-forked>
     <project.build-name>job-dsl</project.build-name>
     <tiles.applyBefore>org.jenkins-ci.plugins:job-dsl-parent</tiles.applyBefore>
     <tiles.mergeTarget>${tiles.applyBefore}</tiles.mergeTarget>
+    <version.gebit-enforcer-rules>2.6.0</version.gebit-enforcer-rules>
     <version.maven-enforcer-plugin>${maven-enforcer-plugin.version}</version.maven-enforcer-plugin>
     <version.maven-surefire-plugin>${maven-surefire-plugin.version}</version.maven-surefire-plugin>
     <!-- GEBIT: end -->
